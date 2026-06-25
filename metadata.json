@@ -1,0 +1,6 @@
+{
+  "name": "CivicPulse AI",
+  "description": "The complete civic operating system connecting citizens and municipalities with intelligent issue routing, AI-powered predictive analysis, and blockchain-sealed accountability.",
+  "requestFramePermissions": ["microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
