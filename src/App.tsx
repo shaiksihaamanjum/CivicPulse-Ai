@@ -37,18 +37,93 @@ export default function App() {
 
   // Demographic / Simulation / Persona States
   const [selectedPersona, setSelectedPersona] = useState<"resident" | "analyst" | "administrator">("resident");
-  const [isOffline, setIsOffline] = useState(false);
   const [dbError, setDbError] = useState(false);
-  const [localPendingReports, setLocalPendingReports] = useState<Issue[]>(() => {
-    try {
-      const saved = localStorage.getItem("civicpulse_offline_queue");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
   const [testResults, setTestResults] = useState<{ name: string; status: "PASS" | "FAIL" | "PENDING"; desc: string }[] | null>(null);
   const [runningTests, setRunningTests] = useState(false);
+
+  // Dynamic user profile for gamification scoring and badges
+  const [profile, setProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem("civicpulse_user_profile");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.name === "Shaik Sihaam" || parsed.score < 10000) {
+          parsed.name = "Shaik Sihaam Anjum";
+          parsed.score = 10450;
+          parsed.unlockedBadges = ["Pioneer", "City Fixer", "Ward Guardian"];
+        }
+        return parsed;
+      }
+    } catch {}
+    return {
+      name: "Shaik Sihaam Anjum",
+      reportsCount: 4,
+      verificationsCount: 8,
+      score: 10450,
+      streak: 3,
+      rating: 9.8,
+      unlockedBadges: ["Pioneer", "City Fixer", "Ward Guardian"]
+    };
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("civicpulse_user_profile", JSON.stringify(profile));
+    } catch {}
+  }, [profile]);
+
+  const handleAddScore = (points: number, activityType: string, detail?: string) => {
+    setProfile(prev => {
+      const isVerification = activityType === "verification";
+      const newVerificationsCount = isVerification ? prev.verificationsCount + 1 : prev.verificationsCount;
+      const isReport = activityType === "report";
+      const newReportsCount = isReport ? prev.reportsCount + 1 : prev.reportsCount;
+      
+      let newStreak = prev.streak;
+      if (activityType === "streak") {
+        newStreak = prev.streak + 1;
+      }
+
+      const newScore = prev.score + points;
+      const badges = [...prev.unlockedBadges];
+
+      if (newReportsCount >= 1 && !badges.includes("Pioneer")) {
+        badges.push("Pioneer");
+      }
+      if (newVerificationsCount >= 5 && !badges.includes("City Fixer")) {
+        badges.push("City Fixer");
+      }
+      if (newScore >= 1800 && !badges.includes("Ward Guardian")) {
+        badges.push("Ward Guardian");
+      }
+
+      // Special category-based badge unlocks
+      if (activityType === "report" && detail) {
+        if (detail.toLowerCase().includes("pothole") && !badges.includes("Pothole Hunter")) {
+          badges.push("Pothole Hunter");
+        }
+        if (detail.toLowerCase().includes("water") && !badges.includes("Water Guardian")) {
+          badges.push("Water Guardian");
+        }
+        if (detail.toLowerCase().includes("streetlight") && !badges.includes("Light Keeper")) {
+          badges.push("Light Keeper");
+        }
+      }
+
+      if (newStreak >= 4 && !badges.includes("Civic Warrior")) {
+        badges.push("Civic Warrior");
+      }
+
+      return {
+        ...prev,
+        score: newScore,
+        verificationsCount: newVerificationsCount,
+        reportsCount: newReportsCount,
+        streak: newStreak,
+        unlockedBadges: badges
+      };
+    });
+  };
 
   // Animating counters locally on mount
   const [animServed, setAnimServed] = useState(2300000);
@@ -62,11 +137,6 @@ export default function App() {
       return;
     }
     try {
-      if (isOffline) {
-        setLoading(false);
-        return;
-      }
-
       const [issuesRes, logsRes, statsRes] = await Promise.all([
         fetch("/api/issues"),
         fetch("/api/blockchain-logs"),
@@ -75,8 +145,7 @@ export default function App() {
 
       if (issuesRes.ok) {
         const issuesData = await issuesRes.json();
-        // Prepend any local pending reports to issues list visually
-        setIssues([...localPendingReports, ...issuesData]);
+        setIssues(issuesData);
       }
       if (logsRes.ok) setLogs(await logsRes.json());
       if (statsRes.ok) {
@@ -92,48 +161,7 @@ export default function App() {
 
   useEffect(() => {
     fetchState();
-  }, [dbError, isOffline]);
-
-  // Handle local pending report syncing when switching from Offline to Online
-  useEffect(() => {
-    if (!isOffline && localPendingReports.length > 0) {
-      const syncReports = async () => {
-        setLoading(true);
-        try {
-          for (const report of localPendingReports) {
-            await fetch("/api/issues", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                description: report.description,
-                type: report.type,
-                severity: report.severity,
-                department: report.department,
-                estimatedCost: report.estimatedCost,
-                technique: report.technique,
-                crewSize: report.crewSize,
-                hoursEstimate: report.hoursEstimate,
-                language: report.language || "English",
-                locationName: report.locationName,
-                reporter: report.reporter,
-              }),
-            });
-          }
-          // Clear queue
-          setLocalPendingReports([]);
-          localStorage.removeItem("civicpulse_offline_queue");
-          setToast({ show: true, ref: "Synced!" });
-          setTimeout(() => setToast(null), 4000);
-          fetchState();
-        } catch (err) {
-          console.error("Failed to sync offline queue:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      syncReports();
-    }
-  }, [isOffline]);
+  }, [dbError]);
 
   // Sync animating numbers with stats values
   useEffect(() => {
@@ -167,25 +195,7 @@ export default function App() {
   }, [stats, loading]);
 
   const handleReportSuccess = (newIssue: Issue, newBlocks: BlockLog[]) => {
-    if (isOffline) {
-      // Offline safe buffer - cache in local pending queue
-      const pendingReport: Issue = {
-        ...newIssue,
-        id: `MOCK-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: "Active",
-        reportedAt: new Date().toISOString()
-      };
-      const updated = [pendingReport, ...localPendingReports];
-      setLocalPendingReports(updated);
-      localStorage.setItem("civicpulse_offline_queue", JSON.stringify(updated));
-      setIssues((prev) => [pendingReport, ...prev]);
-      
-      setToast({ show: true, ref: "PENDING_SYNC" });
-      setTimeout(() => {
-        setToast(null);
-      }, 5000);
-      return;
-    }
+    handleAddScore(150, "report", newIssue.type);
 
     setIssues((prev) => [newIssue, ...prev]);
     setLogs((prev) => [...newBlocks, ...prev]);
@@ -373,7 +383,7 @@ export default function App() {
           </h1>
 
           <p className="text-neutral-400 text-sm sm:text-base max-w-xl leading-relaxed font-sans mb-8">
-            CivicPulse AI is the world's first complete Civic OS — bridging the gap between residents and municipal councils. Report local issues in any dialect instantly. Predictive AI diagnoses risks early, while the immutable blockchain guarantees paper complaints can never be deleted or ignored.
+            CivicPulse AI is a concept municipal operating platform designed to bridge the gap between residents and local councils. Report issues in regional dialects with automatic AI-assisted categorization. Our integrated ledger simulator creates a transparent, public audit trail of every report from submission to resolution.
           </p>
 
           <div className="flex flex-wrap gap-4 w-full sm:w-auto">
@@ -566,19 +576,9 @@ export default function App() {
                 <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
                 Developer Sandbox & Edge-State Playground
               </h3>
-              <p className="text-[10px] text-neutral-500 font-sans mt-0.5">Toggle simulated outages, test localized queues, and execute diagnostic assertions.</p>
+              <p className="text-[10px] text-neutral-500 font-sans mt-0.5">Toggle simulated database outages and execute diagnostic assertions.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setIsOffline(!isOffline)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-sans transition-all border cursor-pointer ${
-                  isOffline
-                    ? "bg-red-500/20 border-red-500 text-red-400"
-                    : "bg-white/5 border-white/10 text-neutral-400 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                {isOffline ? "🔌 Force Online" : "📡 Force Offline-Safe Buffer"}
-              </button>
               <button
                 onClick={() => setDbError(!dbError)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold font-sans transition-all border cursor-pointer ${
@@ -595,7 +595,7 @@ export default function App() {
                   setTestResults([
                     { name: "Verification 1: Input Fields Validity Check", status: "PENDING", desc: "Verifying civic modal validations for category and description" },
                     { name: "Verification 2: Trust Audit Panel Veracity", status: "PENDING", desc: "Ensuring model version, prompt veracity, and alignment scores load correctly" },
-                    { name: "Verification 3: Local Offline Queue Integrity", status: "PENDING", desc: "Simulating disconnect storage caching & local indexing resilience" },
+                    { name: "Verification 3: Live CivicScore Sync Performance", status: "PENDING", desc: "Validating dynamic leaderboard state and score emission timers" },
                     { name: "Verification 4: User Roles Access Rules", status: "PENDING", desc: "Asserting restricted controls between citizen submission and executive dispatch" }
                   ]);
                   await new Promise(r => setTimeout(r, 600));
@@ -619,31 +619,16 @@ export default function App() {
           {/* Render Active Outage Simulated Overlays */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
             <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4">
-              <span className="text-[10px] uppercase text-neutral-500 tracking-wider font-bold block mb-2">Network Buffer Status</span>
-              {isOffline ? (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 space-y-1.5">
-                  <p className="font-semibold flex items-center gap-1.5 text-[11px]">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                    Simulated Offline Mode Engaged
-                  </p>
-                  <p className="text-[10px] text-neutral-400 leading-relaxed font-sans">
-                    New issue submissions will skip direct server calls, securely hashing and queuing inside browser <strong className="text-white">localStorage</strong> buffer.
-                  </p>
-                  <div className="text-[10px] text-orange-400 font-semibold">
-                    ⏳ Local queue size: {localPendingReports.length} reports pending sync
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10 text-green-400 space-y-1 text-[11px]">
-                  <p className="font-semibold flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                    Connected to Zonal Network (Live)
-                  </p>
-                  <p className="text-[10px] text-neutral-400 font-sans">
-                    Direct RPC connections open. Transactions auto-signed and committed to the Polygon blockchain.
-                  </p>
-                </div>
-              )}
+              <span className="text-[10px] uppercase text-neutral-500 tracking-wider font-bold block mb-2">Blockchain Status</span>
+              <div className="p-3 rounded-xl bg-green-500/5 border border-green-500/10 text-green-400 space-y-1 text-[11px]">
+                <p className="font-semibold flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  Connected to Zonal Network (Live)
+                </p>
+                <p className="text-[10px] text-neutral-400 font-sans">
+                  Direct RPC connections open. Transactions auto-signed and committed to the Polygon blockchain.
+                </p>
+              </div>
             </div>
 
             <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-4">
@@ -734,7 +719,7 @@ export default function App() {
             </div>
             
             {/* Dynamic Dashboard Portal Component */}
-            <Dashboard issues={issues} stats={stats} onActionSuccess={fetchState} selectedPersona={selectedPersona} />
+            <Dashboard issues={issues} stats={stats} onActionSuccess={fetchState} selectedPersona={selectedPersona} onAddScore={handleAddScore} />
           </>
         )}
       </section>
@@ -818,9 +803,9 @@ export default function App() {
           <div className="bg-[#0A0A0A] border border-white/10 rounded-3xl p-6 sm:p-8 hover:border-orange-500/20 transition-all duration-300 relative group">
             <div className="absolute -top-3.5 left-6 bg-gradient-to-r from-orange-500 to-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-display font-bold text-sm shadow-md">6</div>
             <div className="text-2xl mb-4 mt-2">🔗</div>
-            <h3 className="text-white text-base font-semibold font-sans mb-2">6. On-Chain Ledger</h3>
+            <h3 className="text-white text-base font-semibold font-sans mb-2">6. Audit Ledger Simulator</h3>
             <p className="text-xs text-neutral-400 leading-relaxed font-sans">
-              Resolution, verified by community sign-off, is permanently sealed on Polygon blockchain. Unalterable history.
+              Resolution history, once verified by community confirmation, is cryptographically logged in a simulated, tamper-resistant block explorer.
             </p>
           </div>
 
@@ -828,7 +813,7 @@ export default function App() {
       </section>
 
       {/* 9. CivicScore & Gamification Section */}
-      <Gamification />
+      <Gamification profile={profile} onAddScore={handleAddScore} />
 
       {/* 10. Blockchain Audit Trail Section */}
       <BlockchainLogs logs={logs} onRefresh={fetchState} loading={loading} />
@@ -846,11 +831,11 @@ export default function App() {
           <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
             <div>
               <h3 className="text-2xl sm:text-3.5xl font-display font-light text-white tracking-tight mb-4 leading-snug">
-                "Not just a website. The operating system <br />
-                every modern city deserves."
+                "A transparent bridge for <br />
+                smarter municipal coordination."
               </h3>
               <p className="text-neutral-400 text-xs sm:text-sm max-w-xl leading-relaxed font-sans">
-                Where every resident has immediate voice. AI evaluates and routes automatically. Blockchain secures full accountability. Make your local block a safer, smarter space today.
+                Experience a simplified portal for reporting municipal issues. Translate and route filings using Gemini AI, and track their verification on a prototype public audit ledger.
               </p>
             </div>
 
@@ -911,7 +896,7 @@ export default function App() {
         </div>
 
         <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-neutral-600 gap-4">
-          <p>© 2026 CivicPulse AI. All rights reserved. Zero-gas Polygon network.</p>
+          <p>© 2026 CivicPulse AI. Concept & Hackathon Demo. Built with simulated ledger auditing.</p>
           <div className="flex gap-4">
             <a href="#" className="hover:text-neutral-400 transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-neutral-400 transition-colors">Terms of Filing</a>
@@ -947,10 +932,10 @@ export default function App() {
             </div>
             <div>
               <div className="text-xs font-semibold text-neutral-100 font-sans">
-                Polygon Block Verified & Sealed!
+                Report Logged & Sealed in Ledger!
               </div>
               <p className="text-[10px] text-neutral-500 font-sans mt-0.5 leading-relaxed">
-                Your report has been assigned reference <strong className="text-white">#{toast.ref}</strong>. Nearby upvoters notified!
+                Your filing has been logged in the audit ledger with reference <strong className="text-white">#{toast.ref}</strong>. Local queue synced!
               </p>
             </div>
           </motion.div>

@@ -1,10 +1,12 @@
 export interface Issue {
   id: string;
-  type: "Pothole" | "Water Leak" | "Streetlight" | "Garbage" | "Drainage" | "Other";
+  title?: string;
+  type: "Pothole" | "Water Leak" | "Streetlight" | "Garbage" | "Drainage" | "Other" | "Water Leakage" | "Waste Management" | "Streetlight Damage" | "Public Safety";
   description: string;
   language: string;
-  status: "Active" | "Escalated" | "In Progress" | "Resolved";
+  status: "Reported" | "Under Review" | "Verified" | "Assigned" | "In Progress" | "Resolved" | "Active" | "Escalated";
   severity: number;
+  urgencyScore?: number;
   department: string;
   estimatedCost: number;
   lat: number;
@@ -21,6 +23,22 @@ export interface Issue {
     crewSize: number;
     hoursEstimate: number;
   };
+  upvotes?: number;
+  comments?: Array<{
+    id: string;
+    author: string;
+    text: string;
+    timestamp: string;
+    imageUrl?: string;
+  }>;
+  beforeImage?: string;
+  afterImage?: string;
+  completionNotes?: string;
+  timeline?: Array<{
+    status: string;
+    timestamp: string;
+    details: string;
+  }>;
 }
 
 export interface BlockLog {

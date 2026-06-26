@@ -52,10 +52,10 @@ export default function Impact() {
           <span className="text-6xl sm:text-8xl text-white/5 font-display font-light leading-none tracking-tighter">02.</span>
           <div className="space-y-3">
             <h2 className="text-3xl sm:text-5xl text-white font-display font-medium tracking-tight">
-              Real Cities. Real Impact.
+              Interactive User Scenarios
             </h2>
             <p className="text-neutral-400 text-sm sm:text-base max-w-2xl leading-relaxed font-sans">
-              Discover how citizens and public servants are using CivicPulse to bring concrete accountability to their streets and neighborhoods.
+              Explore these simulated pilot walk-throughs showcasing how residents and administrators interact to resolve community challenges.
             </p>
           </div>
         </div>
@@ -116,36 +116,36 @@ export default function Impact() {
                 <span className="text-3xl font-display font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white to-orange-400">
                   2.4M
                 </span>
-                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Citizens Served</span>
+                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Projected Target Pop.</span>
               </div>
 
               <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
                 <span className="text-3xl font-display font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white to-orange-400">
                   94.7%
                 </span>
-                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Resolution Rate</span>
+                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Demo Resolution Rate</span>
               </div>
 
               <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
                 <span className="text-3xl font-display font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white to-orange-400">
                   32hrs
                 </span>
-                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Avg Repair Speed</span>
+                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Simulated Repair Speed</span>
               </div>
 
               <div className="bg-white/5 border border-white/5 rounded-2xl p-4 text-center">
                 <span className="text-3xl font-display font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white to-orange-400">
                   50+
                 </span>
-                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Supported Dialects</span>
+                <span className="text-[10px] text-neutral-500 block uppercase tracking-wider mt-1 font-sans font-semibold">Potential Dialect Coverage</span>
               </div>
             </div>
 
             <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 text-center">
               <span className="text-xl font-display font-bold text-orange-400">
-                ₹4.2Cr saved via AI Early Diagnostics
+                ₹4.2Cr projected savings from AI Early Diagnostics
               </span>
-              <p className="text-[9px] text-neutral-500 uppercase tracking-widest font-sans font-semibold mt-1">Preventative vs reactive municipal work</p>
+              <p className="text-[9px] text-neutral-500 uppercase tracking-widest font-sans font-semibold mt-1">Preventative vs reactive municipal work models</p>
             </div>
           </div>
 

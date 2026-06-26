@@ -10,8 +10,8 @@ node >= 18.0.0
 npm >= 9.0.0
 
 # Server-Side API Services
-# express == 4.19.2
-# @google/genai == 0.1.1
+express == 4.19.2
+@google/genai == 0.1.1
 
 # Frontend Interface Components
 react == 18.3.1

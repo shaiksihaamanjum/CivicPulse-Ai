@@ -4,18 +4,18 @@ import OrbitSphere from "./three/OrbitSphere";
 const pillars = [
   {
     icon: <Map className="w-6 h-6 text-neutral-400 group-hover:text-orange-500 transition-colors" />,
-    title: "Real-Time Cloud Integration",
-    description: "Works with highly resilient cloud pipelines. Reports are instantly processed and securely synchronized in real-time, providing lightning-fast dispatch to respective municipal zones.",
+    title: "Resilient Synchronization",
+    description: "Works with robust synchronization pipelines. Reports are instantly stored and securely synchronized in real-time with our Node.js database, ensuring prompt dispatch to zonal queues.",
   },
   {
     icon: <Lock className="w-6 h-6 text-neutral-400 group-hover:text-orange-500 transition-colors" />,
-    title: "Blockchain Accountability",
-    description: "Every submission, municipal assignment, contractor update, and citizen verification is recorded in an immutable ledger. No administrator can delete or modify reports to falsify municipal progress.",
+    title: "Ledger Accountability Simulator",
+    description: "Every submission, municipal assignment, contractor update, and citizen verification is recorded in a simulated unalterable ledger, demonstrating how complete transparency prevents tampering.",
   },
   {
     icon: <BrainCircuit className="w-6 h-6 text-neutral-400 group-hover:text-orange-500 transition-colors" />,
-    title: "Predictive AI Engine",
-    description: "Analyzes historic fault rates, weather charts, and infrastructure materials age using Gemini's predictive algorithms to alert departments about impending road, pipeline, or lighting failures before they manifest.",
+    title: "Risk Diagnostics (Demo)",
+    description: "Analyzes report categories, frequency, and cluster locations using Gemini to flag high-risk infrastructure failures before they impact the broader community.",
   },
 ];
 
@@ -128,7 +128,7 @@ export default function Features() {
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-white/5">
             <span className="text-xs text-neutral-400 font-sans">
-              All filings process through local NLP modules representing 50+ languages.
+              Filings are translated and categorized using our integrated Gemini LLM system.
             </span>
             <span className="text-xs text-orange-400 font-medium hover:underline flex items-center gap-1 cursor-pointer font-sans">
               Learn about vision mapping
@@ -214,8 +214,8 @@ export default function Features() {
               <li className="flex items-start gap-3">
                 <span className="text-green-400 font-bold mt-0.5">✓</span>
                 <div>
-                  <h4 className="text-white font-semibold">Immutable Ledger Audits</h4>
-                  <p className="text-neutral-500 text-xs mt-0.5 font-sans leading-relaxed">Seals submission hashes and resolution records to a cryptographic blockchain simulator block list.</p>
+                  <h4 className="text-white font-semibold">Simulated Public Ledger Audits</h4>
+                  <p className="text-neutral-500 text-xs mt-0.5 font-sans leading-relaxed">Seals submission hashes and resolution records to a mock, blockchain-inspired cryptographic block list.</p>
                 </div>
               </li>
             </ul>
